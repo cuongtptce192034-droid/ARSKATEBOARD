@@ -1,3 +1,6 @@
+// ============================================
+// CONFIGURATION CONSTANTS
+// ============================================
 const COLS = 5;
 const ROWS = 7;
 
@@ -7,97 +10,248 @@ const IDLE_END = 34;
 const JUMP_START = 0;
 const JUMP_END = 24;
 
+const IDLE_SPEED = 120;        // ms between idle frames
+const JUMP_FRAME_SPEED = 60;   // ms between jump frames
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 4;
+const SCALE_STEP = 0.2;
+const SPAM_ALERT_DURATION = 800; // ms to show spam warning
+
+// ============================================
+// DOM ELEMENTS
+// ============================================
 const marker = document.querySelector("#marker");
 const character = document.querySelector("#character");
-const plus = document.querySelector("#plus");
-const minus = document.querySelector("#minus");
+const plusBtn = document.querySelector("#plus");
+const minusBtn = document.querySelector("#minus");
+const statusIndicator = document.querySelector("#status");
+const spamWarning = document.querySelector("#spam-warning");
 
+// ============================================
+// STATE VARIABLES
+// ============================================
 let material = null;
 let scale = 1.5;
 let idleFrame = IDLE_START;
 let jumping = false;
 let tracking = false;
+let lastIdleFrameTime = 0;
+let spamWarningTimeout = null;
 
-function sleep(ms){
-  return new Promise(r=>setTimeout(r,ms));
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+/**
+ * Sleep for specified milliseconds (Promise-based)
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function setFrame(frame){
-  // S?A T?I ?¬Y: N?u ?nh ch?a load xong (map = null) thÏ b? qua, khÙng ?? crash code
-  if(!material || !material.map) return;
+/**
+ * Show spam alert temporarily
+ */
+function showSpamAlert() {
+  if (spamWarningTimeout) {
+    clearTimeout(spamWarningTimeout);
+  }
+  spamWarning.style.display = "block";
+  spamWarningTimeout = setTimeout(() => {
+    spamWarning.style.display = "none";
+  }, SPAM_ALERT_DURATION);
+}
+
+/**
+ * Update UI status indicator
+ */
+function updateStatus() {
+  if (tracking) {
+    statusIndicator.classList.add("tracking");
+  } else {
+    statusIndicator.classList.remove("tracking");
+  }
+}
+
+// ============================================
+// SPRITESHEET ANIMATION
+// ============================================
+
+/**
+ * Set current frame on spritesheet
+ * Calculates UV offset based on frame index
+ */
+function setFrame(frame) {
+  if (!material || !material.map) return;
 
   const col = frame % COLS;
   const row = Math.floor(frame / COLS);
 
-  material.map.repeat.set(1/COLS, 1/ROWS);
-  material.map.offset.set(col/COLS, 1 - (row+1)/ROWS);
+  material.map.repeat.set(1 / COLS, 1 / ROWS);
+  material.map.offset.set(col / COLS, 1 - (row + 1) / ROWS);
   material.map.needsUpdate = true;
 }
 
-function initMaterial(){
+/**
+ * Initialize material after mesh is ready
+ * Waits for mesh and texture to load before setting up
+ */
+function initMaterial() {
   const mesh = character.getObject3D("mesh");
-  
-  // S?A T?I ?¬Y: ??i cho ??n khi c? mesh v‡ ?nh n?n (map) s?n s‡ng h?n m?i g·n
-  if(!mesh || !mesh.material || !mesh.material.map){
+
+  // Wait until mesh, material, and texture are ready
+  if (!mesh || !mesh.material || !mesh.material.map) {
     requestAnimationFrame(initMaterial);
     return;
   }
 
   material = mesh.material;
-  material.map.repeat.set(1/COLS, 1/ROWS);
+  material.map.minFilter = THREE.LinearFilter;
+  material.map.magFilter = THREE.LinearFilter;
+  material.map.repeat.set(1 / COLS, 1 / ROWS);
+  
   setFrame(IDLE_START);
+  console.log("‚úÖ Material initialized successfully");
 }
 
-marker.addEventListener("targetFound",()=>{
-  tracking = true;
-  if(!material){
-    initMaterial();
+// ============================================
+// ANIMATION LOGIC
+// ============================================
+
+/**
+ * Jump animation sequence
+ * Plays frames JUMP_START to JUMP_END with anti-spam protection
+ */
+async function jump() {
+  // ANTI-SPAM: Block jump if already jumping, not tracking, or too soon
+  if (jumping) {
+    showSpamAlert();
+    return;
   }
-});
+  
+  if (!tracking) {
+    return;
+  }
 
-marker.addEventListener("targetLost",()=>{
-  tracking = false;
-});
-
-async function jump(){
-  if(jumping) return;
   jumping = true;
 
-  for(let i=JUMP_START; i<=JUMP_END; i++){
-    setFrame(i);
-    await sleep(60);
-  }
-  jumping = false;
-}
-
-let last = 0;
-function animate(time){
-  if(time - last > 100){
-    last = time;
-    if(tracking && !jumping){
-      setFrame(idleFrame);
-      idleFrame++;
-      if(idleFrame > IDLE_END){
-        idleFrame = IDLE_START;
-      }
+  try {
+    // Play jump animation frames
+    for (let i = JUMP_START; i <= JUMP_END; i++) {
+      if (!tracking) break; // Stop if marker lost
+      setFrame(i);
+      await sleep(JUMP_FRAME_SPEED);
+    }
+  } catch (error) {
+    console.error("Jump animation error:", error);
+  } finally {
+    jumping = false;
+    // Reset to idle if still tracking
+    if (tracking) {
+      setFrame(IDLE_START);
+      idleFrame = IDLE_START;
     }
   }
+}
+
+/**
+ * Main animation loop - handles idle animation
+ * Runs independently from jump animation
+ */
+function animate(time) {
+  // Update idle animation only when tracking and not jumping
+  if (tracking && !jumping && time - lastIdleFrameTime > IDLE_SPEED) {
+    lastIdleFrameTime = time;
+    
+    setFrame(idleFrame);
+    idleFrame++;
+    
+    // Loop back to start when reaching end
+    if (idleFrame > IDLE_END) {
+      idleFrame = IDLE_START;
+    }
+  }
+
   requestAnimationFrame(animate);
 }
-requestAnimationFrame(animate);
 
-character.addEventListener("click",()=>{
-  if(tracking){
+// ============================================
+// MARKER TRACKING
+// ============================================
+
+/**
+ * Marker found - start tracking
+ */
+marker.addEventListener("targetFound", () => {
+  tracking = true;
+  updateStatus();
+  
+  // Initialize material on first detection
+  if (!material) {
+    initMaterial();
+  }
+  
+  console.log("üéØ Marker found - tracking started");
+});
+
+/**
+ * Marker lost - stop tracking
+ */
+marker.addEventListener("targetLost", () => {
+  tracking = false;
+  updateStatus();
+  jumping = false; // Reset jumping state
+  console.log("‚ùå Marker lost - tracking stopped");
+});
+
+// ============================================
+// USER INTERACTIONS
+// ============================================
+
+/**
+ * Character click - trigger jump
+ */
+character.addEventListener("click", () => {
+  if (tracking && !jumping) {
     jump();
   }
 });
 
-plus.onclick = () => {
-  scale = Math.min(scale + 0.2, 4);
-  character.object3D.scale.set(scale, scale, scale);
-};
+/**
+ * Zoom In button
+ */
+plusBtn.addEventListener("click", () => {
+  const newScale = Math.min(scale + SCALE_STEP, MAX_SCALE);
+  if (newScale !== scale) {
+    scale = newScale;
+    character.object3D.scale.set(scale, scale, scale);
+    console.log(`üîç Zoomed in: ${scale.toFixed(1)}x`);
+  }
+});
 
-minus.onclick = () => {
-  scale = Math.max(scale - 0.2, 0.5);
-  character.object3D.scale.set(scale, scale, scale);
-};
+/**
+ * Zoom Out button
+ */
+minusBtn.addEventListener("click", () => {
+  const newScale = Math.max(scale - SCALE_STEP, MIN_SCALE);
+  if (newScale !== scale) {
+    scale = newScale;
+    character.object3D.scale.set(scale, scale, scale);
+    console.log(`üîç Zoomed out: ${scale.toFixed(1)}x`);
+  }
+});
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+// Start animation loop
+requestAnimationFrame(animate);
+
+// Initial status update
+updateStatus();
+
+console.log("‚ú® AR Skateboard initialized");
+console.log(`Spritesheet grid: ${COLS}x${ROWS}`);
+console.log(`Idle frames: ${IDLE_START}-${IDLE_END}`);
+console.log(`Jump frames: ${JUMP_START}-${JUMP_END}`);
