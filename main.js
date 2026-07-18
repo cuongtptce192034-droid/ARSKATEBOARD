@@ -1,58 +1,121 @@
-document.querySelector('a-scene').addEventListener('loaded', function () {
-    const character = document.querySelector('#my-character');
-    const btnPlus = document.querySelector('#btn-plus');
-    const btnMinus = document.querySelector('#btn-minus');
-    
-    // ??i texture load xong m?i x? lý ?? tránh l?i tàng hình
-    character.addEventListener('materialtextureloaded', () => {
-        const material = character.getObject3D('mesh').material;
-        const COLS = 5, ROWS = 7;
-        let isJumping = false; // C? ch? ch?ng spam
-        let currentFrame = 25;
-        let scale = 1.5;
+window.addEventListener("load", () => {
 
-        function setFrame(frameIndex) {
-            const col = frameIndex % COLS;
-            const row = Math.floor(frameIndex / COLS);
-            material.map.repeat.set(1 / COLS, 1 / ROWS);
-            material.map.offset.set(col / COLS, 1 - (row + 1) / ROWS);
-            material.needsUpdate = true;
-        }
+const character=document.querySelector("#character");
 
-        // Logic Nh?y (Ch?ng spam)
-        async function playJump() {
-            if (isJumping) return; // N?u ?ang nh?y, b? qua m?i l?nh m?i
-            isJumping = true;
-            for (let i = 0; i <= 24; i++) {
-                setFrame(i);
-                await new Promise(r => setTimeout(r, 60));
-            }
-            isJumping = false; // Xong hành ??ng thì m? khóa
-        }
+const plus=document.querySelector("#btn-plus");
 
-        // Vòng l?p m?c ??nh
-        function playDefaultLoop() {
-            if (!isJumping) {
-                setFrame(currentFrame);
-                currentFrame = (currentFrame >= 34) ? 25 : currentFrame + 1;
-            }
-            setTimeout(playDefaultLoop, 100);
-        }
+const minus=document.querySelector("#btn-minus");
 
-        playDefaultLoop();
+const scene=document.querySelector("a-scene");
 
-        // X? lý t??ng tác
-        character.addEventListener('click', playJump);
+const COLS=5;
+const ROWS=7;
 
-        // Logic Zoom
-        btnPlus.addEventListener('click', () => {
-            scale = Math.min(scale + 0.2, 4);
-            character.setAttribute('scale', `${scale} ${scale} ${scale}`);
-        });
+const JUMP_START=0;
+const JUMP_END=24;
 
-        btnMinus.addEventListener('click', () => {
-            scale = Math.max(scale - 0.2, 0.5);
-            character.setAttribute('scale', `${scale} ${scale} ${scale}`);
-        });
-    });
+const IDLE_START=25;
+const IDLE_END=34;
+
+let material;
+
+let idleFrame=IDLE_START;
+
+let playingJump=false;
+
+let scale=1.5;
+
+scene.addEventListener("renderstart",()=>{
+
+material=character.getObject3D("mesh").material;
+
+material.map.repeat.set(
+1/COLS,
+1/ROWS
+);
+
+startIdle();
+
+});
+
+function setFrame(index){
+
+const col=index%COLS;
+
+const row=Math.floor(index/COLS);
+
+material.map.offset.set(
+
+col/COLS,
+
+1-(row+1)/ROWS
+
+);
+
+material.map.needsUpdate=true;
+
+}
+
+function sleep(ms){
+
+return new Promise(resolve=>setTimeout(resolve,ms));
+
+}
+
+async function playJump(){
+
+if(playingJump) return;
+
+playingJump=true;
+
+for(let i=JUMP_START;i<=JUMP_END;i++){
+
+setFrame(i);
+
+await sleep(60);
+
+}
+
+playingJump=false;
+
+}
+
+function startIdle(){
+
+setInterval(()=>{
+
+if(playingJump) return;
+
+setFrame(idleFrame);
+
+idleFrame++;
+
+if(idleFrame>IDLE_END){
+
+idleFrame=IDLE_START;
+
+}
+
+},100);
+
+}
+
+character.addEventListener("click",playJump);
+
+plus.addEventListener("click",()=>{
+
+scale=Math.min(scale+0.2,4);
+
+character.object3D.scale.set(scale,scale,scale);
+
+});
+
+minus.addEventListener("click",()=>{
+
+scale=Math.max(scale-0.2,0.5);
+
+character.object3D.scale.set(scale,scale,scale);
+
+});
+
 });
