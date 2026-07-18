@@ -101,6 +101,41 @@
       background: lime;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
     }
+
+    /* Debug Panel */
+    #debug-panel {
+      position: fixed;
+      top: 50px;
+      left: 10px;
+      color: #00ff00;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 12px;
+      border-radius: 6px;
+      z-index: 9000;
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      font-family: 'Courier New', monospace;
+      line-height: 1.6;
+      max-width: 200px;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+    }
+
+    #debug-panel div {
+      margin: 4px 0;
+    }
+
+    #debug-status {
+      color: #ffff00;
+      font-weight: bold;
+    }
+
+    #debug-marker {
+      color: #00ffff;
+    }
+
+    #debug-scale {
+      color: #ff00ff;
+    }
   </style>
 </head>
 
@@ -110,6 +145,13 @@
 
   <!-- Anti-spam warning -->
   <div id="spam-warning">Wait... Jumping is in progress!</div>
+
+  <!-- Debug Panel -->
+  <div id="debug-panel">
+    <div id="debug-status">Status: Loading...</div>
+    <div id="debug-marker">Marker: SEARCHING...</div>
+    <div id="debug-scale">Scale: 1.5x</div>
+  </div>
 
   <!-- Zoom Controls -->
   <div id="zoom">
