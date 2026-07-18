@@ -1,33 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
     const char = document.querySelector('#char');
     
-    // Danh sách 10 ảnh Default (1-10)
-    const idleFrames = [];
-    for(let i = 1; i <= 10; i++) {
-        idleFrames.push(`./default/Untitled_Artwork-${i}.png`);
-    }
+    // Liệt kê thủ công 10 ảnh Default
+    const idleFrames = [
+        './default/Untitled_Artwork-1.png', './default/Untitled_Artwork-2.png', './default/Untitled_Artwork-3.png',
+        './default/Untitled_Artwork-4.png', './default/Untitled_Artwork-5.png', './default/Untitled_Artwork-6.png',
+        './default/Untitled_Artwork-7.png', './default/Untitled_Artwork-8.png', './default/Untitled_Artwork-9.png',
+        './default/Untitled_Artwork-10.png'
+    ];
     
-    // Danh sách 25 ảnh Jump (1-25)
-    const jumpFrames = [];
-    for(let i = 1; i <= 25; i++) {
-        jumpFrames.push(`./jump/Untitled_Artwork-${i}.png`);
-    }
+    // Liệt kê thủ công 25 ảnh Jump
+    const jumpFrames = [
+        './jump/Untitled_Artwork-1.png', './jump/Untitled_Artwork-2.png', './jump/Untitled_Artwork-3.png',
+        './jump/Untitled_Artwork-4.png', './jump/Untitled_Artwork-5.png', './jump/Untitled_Artwork-6.png',
+        './jump/Untitled_Artwork-7.png', './jump/Untitled_Artwork-8.png', './jump/Untitled_Artwork-9.png',
+        './jump/Untitled_Artwork-10.png', './jump/Untitled_Artwork-11.png', './jump/Untitled_Artwork-12.png',
+        './jump/Untitled_Artwork-13.png', './jump/Untitled_Artwork-14.png', './jump/Untitled_Artwork-15.png',
+        './jump/Untitled_Artwork-16.png', './jump/Untitled_Artwork-17.png', './jump/Untitled_Artwork-18.png',
+        './jump/Untitled_Artwork-19.png', './jump/Untitled_Artwork-20.png', './jump/Untitled_Artwork-21.png',
+        './jump/Untitled_Artwork-22.png', './jump/Untitled_Artwork-23.png', './jump/Untitled_Artwork-24.png',
+        './jump/Untitled_Artwork-25.png'
+    ];
     
     let isJumping = false;
     let frameIndex = 0;
 
-    // Animation Default chạy tuần hoàn
+    // Chạy loop Idle
     setInterval(() => {
         if (!isJumping) {
             frameIndex = (frameIndex + 1) % idleFrames.length;
             char.setAttribute('src', idleFrames[frameIndex]);
         }
-    }, 150); 
+    }, 200); // Tăng lên 200ms để điện thoại tải ảnh kịp, tránh đơ
 
-    // Sự kiện nhấn vào nhân vật
     char.addEventListener('click', () => {
-        if (isJumping) return; 
-
+        if (isJumping) return;
         isJumping = true;
         let jumpStep = 0;
 
@@ -36,10 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
             jumpStep++;
             if (jumpStep >= jumpFrames.length) {
                 clearInterval(jumpInterval);
-                setTimeout(() => {
-                    isJumping = false;
-                }, 2000); // Chống spam 2 giây
+                setTimeout(() => { isJumping = false; }, 1000);
             }
-        }, 100); 
+        }, 80); // Chạy nhanh hơn để animation nhảy mượt
     });
 });
