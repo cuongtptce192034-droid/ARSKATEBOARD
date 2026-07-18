@@ -1,260 +1,112 @@
-// ============================================
-// CONFIGURATION CONSTANTS
-// ============================================
-const COLS = 5;
-const ROWS = 7;
+document.querySelector('a-scene').addEventListener('loaded', function () {
+    const scene = document.querySelector('a-scene');
+    const character = document.querySelector('#my-character');
+    const material = character.getObject3D('mesh').material;
 
-const IDLE_START = 25;
-const IDLE_END = 34;
+    // ========== CẤU HÌNH SPRITE ==========
+    const COLS = 5;
+    const ROWS = 7;
+    let isAnimating = false;
+    let currentScale = 1.0;
+    const MIN_SCALE = 0.5;
+    const MAX_SCALE = 3.0;
 
-const JUMP_START = 0;
-const JUMP_END = 24;
-
-const IDLE_SPEED = 120;
-const JUMP_FRAME_SPEED = 60;
-const MIN_SCALE = 0.5;
-const MAX_SCALE = 4;
-const SCALE_STEP = 0.2;
-const SPAM_ALERT_DURATION = 800;
-
-// ============================================
-// DOM ELEMENTS
-// ============================================
-const marker = document.querySelector("#marker");
-const character = document.querySelector("#character");
-const plusBtn = document.querySelector("#plus");
-const minusBtn = document.querySelector("#minus");
-const statusIndicator = document.querySelector("#status");
-const spamWarning = document.querySelector("#spam-warning");
-const scene = document.querySelector("a-scene");
-const debugStatus = document.querySelector("#debug-status");
-const debugMarker = document.querySelector("#debug-marker");
-const debugScale = document.querySelector("#debug-scale");
-
-// ============================================
-// STATE VARIABLES
-// ============================================
-let material = null;
-let scale = 1.5;
-let idleFrame = IDLE_START;
-let jumping = false;
-let tracking = false;
-let lastIdleFrameTime = 0;
-let spamWarningTimeout = null;
-let animationRunning = false;
-
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function showSpamAlert() {
-  if (spamWarningTimeout) {
-    clearTimeout(spamWarningTimeout);
-  }
-  spamWarning.style.display = "block";
-  spamWarningTimeout = setTimeout(() => {
-    spamWarning.style.display = "none";
-  }, SPAM_ALERT_DURATION);
-}
-
-function updateStatus() {
-  if (tracking) {
-    statusIndicator.classList.add("tracking");
-    debugStatus.textContent = "✅ Status: Tracking";
-  } else {
-    statusIndicator.classList.remove("tracking");
-    debugStatus.textContent = "❌ Status: Not Tracking";
-  }
-}
-
-function updateDebug() {
-  debugMarker.textContent = `Marker: ${tracking ? "FOUND ✅" : "NOT FOUND ❌"}`;
-  debugScale.textContent = `Scale: ${scale.toFixed(1)}x`;
-}
-
-// ============================================
-// SPRITESHEET ANIMATION
-// ============================================
-
-function setFrame(frame) {
-  if (!material || !material.map) return;
-
-  const col = frame % COLS;
-  const row = Math.floor(frame / COLS);
-
-  material.map.repeat.set(1 / COLS, 1 / ROWS);
-  material.map.offset.set(col / COLS, 1 - (row + 1) / ROWS);
-  material.map.needsUpdate = true;
-}
-
-function initMaterial() {
-  const mesh = character.getObject3D("mesh");
-
-  if (!mesh || !mesh.material || !mesh.material.map) {
-    requestAnimationFrame(initMaterial);
-    return;
-  }
-
-  material = mesh.material;
-  material.map.minFilter = THREE.LinearFilter;
-  material.map.magFilter = THREE.LinearFilter;
-  material.map.repeat.set(1 / COLS, 1 / ROWS);
-  
-  setFrame(IDLE_START);
-  
-  if (!animationRunning) {
-    animationRunning = true;
-    animate(Date.now());
-  }
-}
-
-// ============================================
-// ANIMATION LOGIC
-// ============================================
-
-async function jump() {
-  if (jumping) {
-    showSpamAlert();
-    return;
-  }
-  
-  if (!tracking) {
-    return;
-  }
-
-  jumping = true;
-
-  try {
-    for (let i = JUMP_START; i <= JUMP_END; i++) {
-      if (!tracking) break;
-      setFrame(i);
-      await sleep(JUMP_FRAME_SPEED);
+    // ========== CẬP NHẬT STATUS ==========
+    function updateStatus(statusMsg, animMsg) {
+        document.getElementById('statusText').textContent = statusMsg;
+        if (animMsg) document.getElementById('animText').textContent = animMsg;
     }
-  } catch (error) {
-    console.error("Jump animation error:", error);
-  } finally {
-    jumping = false;
-    if (tracking) {
-      setFrame(IDLE_START);
-      idleFrame = IDLE_START;
-    }
-  }
-}
 
-function animate(time) {
-  if (tracking && !jumping && time - lastIdleFrameTime > IDLE_SPEED) {
-    lastIdleFrameTime = time;
+    // ========== SPRITE ANIMATION ==========
+    function setFrame(frameIndex) {
+        const col = frameIndex % COLS;
+        const row = Math.floor(frameIndex / COLS);
+        
+        material.map.repeat.set(1 / COLS, 1 / ROWS);
+        material.map.offset.set(col / COLS, 1 - (row + 1) / ROWS);
+        material.needsUpdate = true;
+    }
+
+    async function playAnimation(startFrame, endFrame, fps, animName) {
+        if (isAnimating) return; // Chống spam
+        isAnimating = true;
+        updateStatus('Animating', animName);
+
+        for (let i = startFrame; i <= endFrame; i++) {
+            setFrame(i);
+            await new Promise(resolve => setTimeout(resolve, 1000 / fps));
+        }
+
+        isAnimating = false;
+        playDefaultLoop();
+    }
+
+    // ========== IDLE LOOP (FRAME 25-34 VÔ HẠN) ==========
+    let defaultFrame = 25;
+    let idleLoop = null;
     
-    setFrame(idleFrame);
-    idleFrame++;
-    
-    if (idleFrame > IDLE_END) {
-      idleFrame = IDLE_START;
+    function playDefaultLoop() {
+        if (isAnimating) return;
+        setFrame(defaultFrame);
+        defaultFrame++;
+        if (defaultFrame > 34) defaultFrame = 25;
+        updateStatus('Idle', 'Frame ' + defaultFrame);
+        idleLoop = setTimeout(playDefaultLoop, 100);
     }
-  }
 
-  requestAnimationFrame(animate);
-}
-
-// ============================================
-// MARKER TRACKING
-// ============================================
-
-marker.addEventListener("targetFound", () => {
-  tracking = true;
-  updateStatus();
-  updateDebug();
-  
-  if (!material) {
-    initMaterial();
-  } else {
-    setFrame(IDLE_START);
-    idleFrame = IDLE_START;
-  }
-});
-
-marker.addEventListener("targetLost", () => {
-  tracking = false;
-  jumping = false;
-  updateStatus();
-  updateDebug();
-});
-
-// ============================================
-// USER INTERACTIONS
-// ============================================
-
-character.addEventListener("click", () => {
-  if (tracking && !jumping) {
-    jump();
-  }
-});
-
-plusBtn.addEventListener("click", () => {
-  const newScale = Math.min(scale + SCALE_STEP, MAX_SCALE);
-  if (newScale !== scale) {
-    scale = newScale;
-    character.object3D.scale.set(scale, scale, scale);
-    updateDebug();
-  }
-});
-
-minusBtn.addEventListener("click", () => {
-  const newScale = Math.max(scale - SCALE_STEP, MIN_SCALE);
-  if (newScale !== scale) {
-    scale = newScale;
-    character.object3D.scale.set(scale, scale, scale);
-    updateDebug();
-  }
-});
-
-// ============================================
-// SCENE EVENTS
-// ============================================
-
-if (scene) {
-  scene.addEventListener("loaded", () => {
-    updateStatus();
-    updateDebug();
-    
-    if (material && !animationRunning) {
-      animationRunning = true;
-      animate(Date.now());
+    // ========== ZOOM CONTROL ==========
+    function updateScale() {
+        character.setAttribute('geometry', {
+            primitive: 'plane',
+            width: 1 * currentScale,
+            height: 1 * currentScale
+        });
+        document.getElementById('zoomValue').textContent = currentScale.toFixed(1) + 'x';
+        document.getElementById('scaleText').textContent = currentScale.toFixed(2);
     }
-  });
 
-  scene.addEventListener("error", (err) => {
-    console.error("Scene error:", err);
-  });
-}
+    document.getElementById('zoomIn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentScale < MAX_SCALE) {
+            currentScale = Math.min(currentScale + 0.1, MAX_SCALE);
+            updateScale();
+        }
+    });
 
-// ============================================
-// TEXTURE LOADING
-// ============================================
+    document.getElementById('zoomOut').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentScale > MIN_SCALE) {
+            currentScale = Math.max(currentScale - 0.1, MIN_SCALE);
+            updateScale();
+        }
+    });
 
-const textureImg = document.querySelector("#sheet");
-if (textureImg) {
-  textureImg.addEventListener("load", () => {
-    console.log("Texture loaded");
-  });
-  
-  textureImg.addEventListener("error", () => {
-    console.error("Failed to load spritesheet.png");
-  });
-}
+    // ========== CLICK ĐỂ JUMP (FRAME 0-24) ==========
+    window.addEventListener('click', (e) => {
+        // Bỏ qua khi bấm nút zoom
+        if (e.target.id === 'zoomIn' || e.target.id === 'zoomOut') {
+            return;
+        }
+        playAnimation(0, 24, 15, 'Jump');
+    });
 
-// ============================================
-// INITIALIZATION
-// ============================================
+    // ========== SCENE EVENTS ==========
+    scene.addEventListener('markerFound', () => {
+        updateStatus('Marker Found', 'Starting Idle');
+        if (idleLoop) clearTimeout(idleLoop);
+        playDefaultLoop();
+    });
 
-if (!animationRunning) {
-  animationRunning = true;
-  requestAnimationFrame(animate);
-}
+    scene.addEventListener('markerLost', () => {
+        if (idleLoop) clearTimeout(idleLoop);
+        isAnimating = true;
+        updateStatus('Marker Lost', 'Waiting...');
+    });
 
-updateStatus();
-updateDebug();
+    // ========== KHỞI ĐỘNG BAN ĐẦU ==========
+    updateStatus('Initializing', 'Scan marker...');
+    setTimeout(() => {
+        updateStatus('Ready', 'Waiting for click');
+        playDefaultLoop();
+    }, 500);
+});
