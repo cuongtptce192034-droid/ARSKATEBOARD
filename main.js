@@ -1,13 +1,10 @@
+// ??i scene s?n sàng
 document.querySelector('a-scene').addEventListener('loaded', function () {
     const character = document.querySelector('#my-character');
     
-    // "C?u chì" an toàn: ??i ?nh t?i xong m?i làm gì thì làm
+    // ??i ?nh load xong m?i ch?y ho?t hình, tránh treo máy
     character.addEventListener('materialtextureloaded', () => {
-        console.log("?nh ?ã load xong, b?t ??u ch?y...");
-        
         const material = character.getObject3D('mesh').material;
-        if (!material.map) return;
-
         const COLS = 5;
         const ROWS = 7;
         let isAnimating = false;
@@ -25,7 +22,7 @@ document.querySelector('a-scene').addEventListener('loaded', function () {
             isAnimating = true;
             for (let i = startFrame; i <= endFrame; i++) {
                 setFrame(i);
-                await new Promise(resolve => setTimeout(resolve, 1000 / fps));
+                await new Promise(r => setTimeout(r, 1000 / fps));
             }
             isAnimating = false;
             playDefaultLoop();
@@ -40,10 +37,10 @@ document.querySelector('a-scene').addEventListener('loaded', function () {
             setTimeout(playDefaultLoop, 100); 
         }
 
-        // B?t ??u ch?y vòng l?p Default
+        // B?t ??u
         playDefaultLoop();
 
-        // S? ki?n click ?? nh?y
+        // Click ?? nh?y
         window.addEventListener('click', () => {
             playAnimation(0, 24, 15);
         });
