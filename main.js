@@ -1,44 +1,58 @@
-// ??i A-Frame load xong m?i ch?y
 document.querySelector('a-scene').addEventListener('loaded', function () {
     const character = document.querySelector('#my-character');
-    const material = character.getObject3D('mesh').material;
+    const btnPlus = document.querySelector('#btn-plus');
+    const btnMinus = document.querySelector('#btn-minus');
+    
+    // ??i texture load xong m?i x? lý ?? tránh l?i tàng hình
+    character.addEventListener('materialtextureloaded', () => {
+        const material = character.getObject3D('mesh').material;
+        const COLS = 5, ROWS = 7;
+        let isJumping = false; // C? ch? ch?ng spam
+        let currentFrame = 25;
+        let scale = 1.5;
 
-    const COLS = 5;
-    const ROWS = 7;
-    let isAnimating = false;
-
-    function setFrame(frameIndex) {
-        const col = frameIndex % COLS;
-        const row = Math.floor(frameIndex / COLS);
-        material.map.repeat.set(1 / COLS, 1 / ROWS);
-        material.map.offset.set(col / COLS, 1 - (row + 1) / ROWS);
-        material.needsUpdate = true;
-    }
-
-    async function playAnimation(startFrame, endFrame, fps) {
-        if (isAnimating) return;
-        isAnimating = true;
-        for (let i = startFrame; i <= endFrame; i++) {
-            setFrame(i);
-            await new Promise(resolve => setTimeout(resolve, 1000 / fps));
+        function setFrame(frameIndex) {
+            const col = frameIndex % COLS;
+            const row = Math.floor(frameIndex / COLS);
+            material.map.repeat.set(1 / COLS, 1 / ROWS);
+            material.map.offset.set(col / COLS, 1 - (row + 1) / ROWS);
+            material.needsUpdate = true;
         }
-        isAnimating = false;
+
+        // Logic Nh?y (Ch?ng spam)
+        async function playJump() {
+            if (isJumping) return; // N?u ?ang nh?y, b? qua m?i l?nh m?i
+            isJumping = true;
+            for (let i = 0; i <= 24; i++) {
+                setFrame(i);
+                await new Promise(r => setTimeout(r, 60));
+            }
+            isJumping = false; // Xong hành ??ng thì m? khóa
+        }
+
+        // Vòng l?p m?c ??nh
+        function playDefaultLoop() {
+            if (!isJumping) {
+                setFrame(currentFrame);
+                currentFrame = (currentFrame >= 34) ? 25 : currentFrame + 1;
+            }
+            setTimeout(playDefaultLoop, 100);
+        }
+
         playDefaultLoop();
-    }
 
-    let defaultFrame = 25;
-    function playDefaultLoop() {
-        if (isAnimating) return;
-        setFrame(defaultFrame);
-        defaultFrame++;
-        if (defaultFrame > 34) defaultFrame = 25;
-        setTimeout(playDefaultLoop, 100); 
-    }
+        // X? lý t??ng tác
+        character.addEventListener('click', playJump);
 
-    // Ch?y khi scene ?ã s?n sàng
-    playDefaultLoop();
+        // Logic Zoom
+        btnPlus.addEventListener('click', () => {
+            scale = Math.min(scale + 0.2, 4);
+            character.setAttribute('scale', `${scale} ${scale} ${scale}`);
+        });
 
-    window.addEventListener('click', () => {
-        playAnimation(0, 24, 15);
+        btnMinus.addEventListener('click', () => {
+            scale = Math.max(scale - 0.2, 0.5);
+            character.setAttribute('scale', `${scale} ${scale} ${scale}`);
+        });
     });
 });

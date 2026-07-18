@@ -1,33 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Nạp thư viện A-Frame và MindAR -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    /* Nút Zoom căn giữa phía dưới */
+    #zoom-controls {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; display: flex; gap: 20px;
+    }
+    .zoom-btn {
+      width: 60px; height: 60px; border-radius: 50%; border: none;
+      background: rgba(255, 255, 255, 0.8); font-size: 24px; font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+  </style>
 </head>
 <body>
-  <!-- Scene AR với target.mind của bạn -->
-  <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-    
+  <div id="zoom-controls">
+    <button id="btn-minus" class="zoom-btn">-</button>
+    <button id="btn-plus" class="zoom-btn">+</button>
+  </div>
+
+  <a-scene embedded mindar-image="imageTargetSrc: targets.mind; autoStart: true;" 
+           renderer="colorManagement: true" vr-mode-ui="enabled: false">
     <a-assets>
       <img id="spritesheet" src="spritesheet.png">
     </a-assets>
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Entity gắn vào target -->
     <a-entity mindar-image-target="targetIndex: 0">
       <a-entity 
         id="my-character"
+        class="clickable"
+        scale="1.5 1.5 1.5"
         geometry="primitive: plane; width: 1; height: 1"
         material="src: #spritesheet; transparent: true; side: double">
       </a-entity>
     </a-entity>
-    
   </a-scene>
 
-  <!-- Nạp file JS logic của bạn -->
   <script src="main.js"></script>
 </body>
 </html>
