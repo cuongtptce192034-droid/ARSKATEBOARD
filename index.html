@@ -1,46 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-    <style>
-        body { margin: 0; overflow: hidden; }
-        /* Đảm bảo AR hiển thị đúng trên di động */
-        #scanning-overlay.hidden { display: none; }
-    </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    /* Đảm bảo khung quét hiển thị rõ */
+    .mindar-ui-scanning { display: block !important; }
+  </style>
 </head>
 <body>
-    <!-- MindAR Scene: Tự động quản lý UI quét nếu không tắt -->
-    <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: #scanning-overlay" 
-        renderer="colorManagement: true, physicallyCorrectLights: true" 
-        vr-mode-ui="enabled: false" 
-        device-orientation-permission-ui="enabled: false">
-        
-        <a-assets>
-            <img id="spritesheet-img" src="spritesheet.png">
-        </a-assets>
+  <a-scene 
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: true;" 
+    renderer="colorManagement: true" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
+    
+    <a-assets>
+      <img id="spritesheet" src="spritesheet.png">
+    </a-assets>
 
-        <a-camera position="0 0 0" look-controls="enabled: false">
-            <!-- QUAN TRỌNG: Cursor để nhận diện click trên AR -->
-            <a-cursor fuse="false" raycaster="objects: .clickable"></a-cursor>
-        </a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-entity 
-                id="my-character"
-                class="clickable"
-                scale="1.5 1.5 1.5"
-                geometry="primitive: plane; width: 1; height: 1.2"
-                material="src: #spritesheet-img; transparent: true; side: double">
-            </a-entity>
-        </a-entity>
-        
-        <!-- Overlay quét mặc định của MindAR -->
-        <div id="scanning-overlay" class="hidden"></div>
-    </a-scene>
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-entity 
+        id="my-character"
+        class="clickable"
+        scale="2 2 2"
+        geometry="primitive: plane; width: 1; height: 1"
+        material="src: #spritesheet; transparent: true; side: double">
+      </a-entity>
+    </a-entity>
+  </a-scene>
 
-    <script src="main.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
