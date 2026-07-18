@@ -9,7 +9,7 @@ document.querySelector('a-scene').addEventListener('loaded', function () {
     let isAnimating = false;
     let currentScale = 1.0;
     const MIN_SCALE = 0.5;
-    const MAX_SCALE = 3.0;
+    const MAX_SCALE = 4.0;
 
     // ========== CẬP NHẬT STATUS ==========
     function updateStatus(statusMsg, animMsg) {
