@@ -26,6 +26,7 @@ const plusBtn = document.querySelector("#plus");
 const minusBtn = document.querySelector("#minus");
 const statusIndicator = document.querySelector("#status");
 const spamWarning = document.querySelector("#spam-warning");
+const scene = document.querySelector("a-scene");
 
 // ============================================
 // STATE VARIABLES
@@ -37,6 +38,7 @@ let jumping = false;
 let tracking = false;
 let lastIdleFrameTime = 0;
 let spamWarningTimeout = null;
+let animationRunning = false;
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -101,6 +103,7 @@ function initMaterial() {
 
   // Wait until mesh, material, and texture are ready
   if (!mesh || !mesh.material || !mesh.material.map) {
+    console.log("⏳ Waiting for mesh/material/texture to load...");
     requestAnimationFrame(initMaterial);
     return;
   }
@@ -112,6 +115,12 @@ function initMaterial() {
   
   setFrame(IDLE_START);
   console.log("✅ Material initialized successfully");
+  
+  // Start animation loop if not already running
+  if (!animationRunning) {
+    animationRunning = true;
+    animate(Date.now());
+  }
 }
 
 // ============================================
@@ -188,7 +197,12 @@ marker.addEventListener("targetFound", () => {
   
   // Initialize material on first detection
   if (!material) {
+    console.log("🎯 Marker found - initializing material...");
     initMaterial();
+  } else {
+    // Material already initialized, just reset frame
+    setFrame(IDLE_START);
+    idleFrame = IDLE_START;
   }
   
   console.log("🎯 Marker found - tracking started");
@@ -213,6 +227,7 @@ marker.addEventListener("targetLost", () => {
  */
 character.addEventListener("click", () => {
   if (tracking && !jumping) {
+    console.log("👆 Character clicked - jumping!");
     jump();
   }
 });
@@ -242,16 +257,66 @@ minusBtn.addEventListener("click", () => {
 });
 
 // ============================================
-// INITIALIZATION
+// SCENE EVENTS
+// ============================================
+
+/**
+ * Wait for A-Frame scene to be ready before initializing
+ */
+if (scene) {
+  scene.addEventListener("loaded", () => {
+    console.log("✨ A-Frame scene loaded - initializing AR Skateboard...");
+    console.log(`Spritesheet grid: ${COLS}x${ROWS}`);
+    console.log(`Idle frames: ${IDLE_START}-${IDLE_END}`);
+    console.log(`Jump frames: ${JUMP_START}-${JUMP_END}`);
+    console.log("🎥 Camera is ready, point at your marker to start!");
+    
+    // Initial status update
+    updateStatus();
+    
+    // Start animation if material is ready
+    if (material && !animationRunning) {
+      animationRunning = true;
+      animate(Date.now());
+    }
+  });
+
+  /**
+   * Handle scene errors
+   */
+  scene.addEventListener("error", (err) => {
+    console.error("❌ A-Frame scene error:", err);
+  });
+}
+
+/**
+ * Log when textures are ready
+ */
+const textureImg = document.querySelector("#sheet");
+if (textureImg) {
+  textureImg.addEventListener("load", () => {
+    console.log("📸 Spritesheet texture loaded successfully");
+  });
+  textureImg.addEventListener("error", () => {
+    console.error("❌ Failed to load spritesheet.png - check file path and CORS!");
+  });
+}
+
+// ============================================
+// INITIALIZATION (fallback if scene already loaded)
 // ============================================
 
 // Start animation loop
-requestAnimationFrame(animate);
+if (!animationRunning) {
+  animationRunning = true;
+  requestAnimationFrame(animate);
+}
 
 // Initial status update
 updateStatus();
 
-console.log("✨ AR Skateboard initialized");
+console.log("✨ AR Skateboard initializing...");
 console.log(`Spritesheet grid: ${COLS}x${ROWS}`);
 console.log(`Idle frames: ${IDLE_START}-${IDLE_END}`);
 console.log(`Jump frames: ${JUMP_START}-${JUMP_END}`);
+console.log("🎥 Waiting for A-Frame scene to load...");
