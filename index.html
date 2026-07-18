@@ -162,12 +162,12 @@
   <!-- AR Scene -->
   <a-scene
     embedded
-    mindar-image="imageTargetSrc: targets.mind; autoStart: true;"
-    renderer="colorManagement: true; physicallyCorrectLights: true; outputEncoding: sRGB"
+    mindar-image="imageTargetSrc: targets.mind; autoStart: true; maxTrackingDistance: 2"
+    renderer="colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false">
 
-    <a-assets>
+    <a-assets timeout="10000">
       <!-- Spritesheet with proper CORS handling -->
       <img id="sheet" src="spritesheet.png" crossorigin="anonymous" loading="lazy">
     </a-assets>
