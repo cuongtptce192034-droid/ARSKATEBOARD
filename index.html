@@ -6,29 +6,48 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
-        /* Style cho 2 nút Zoom */
-        #zoom-controls {
-            position: fixed; bottom: 30px; right: 20px; z-index: 10;
-            display: flex; flex-direction: column; gap: 10px;
+        
+        /* Giao diện nút bấm Zoom */
+        .zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
         }
         .zoom-btn {
-            width: 50px; height: 50px; border-radius: 50%; border: none;
-            background: rgba(255, 255, 255, 0.7); font-size: 24px; font-weight: bold;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            border: none;
+            background: rgba(255, 255, 255, 0.8);
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
+        .zoom-btn:active { background: #fff; }
+
+        /* Giao diện quét (Mặc định hiện lên khi đang tìm target) */
+        #scanning-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5) url('https://hiukim.github.io/mind-ar-js-doc/assets/images/scanning-b747970d499307779d71c46950e1ef38.png') no-repeat center;
+            background-size: 200px; z-index: 2;
+        }
+        #scanning-overlay.hidden { display: none; }
     </style>
 </head>
 <body>
-    <div id="scanning-overlay"></div>
-    
-    <!-- Giao diện nút bấm -->
-    <div id="zoom-controls">
-        <button id="btn-plus" class="zoom-btn">+</button>
-        <button id="btn-minus" class="zoom-btn">-</button>
+    <div class="zoom-controls">
+        <button id="zoomIn" class="zoom-btn">+</button>
+        <button id="zoomOut" class="zoom-btn">-</button>
     </div>
 
     <a-scene 
         mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: #scanning-overlay" 
-        renderer="colorManagement: true" 
+        renderer="colorManagement: true, physicallyCorrectLights: true" 
         vr-mode-ui="enabled: false" 
         device-orientation-permission-ui="enabled: false">
         
@@ -36,16 +55,22 @@
             <img id="spritesheet-img" src="spritesheet.png">
         </a-assets>
 
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <a-camera position="0 0 0" look-controls="enabled: false">
+            <a-cursor fuse="false" raycaster="objects: .clickable"></a-cursor>
+        </a-camera>
 
-        <a-entity mindar-image-target="targetIndex: 0">
+        <!-- Thêm sự kiện để kiểm tra nhận diện -->
+        <a-entity id="target" mindar-image-target="targetIndex: 0">
             <a-entity 
                 id="my-character"
+                class="clickable"
                 scale="1.5 1.5 1.5"
                 geometry="primitive: plane; width: 1; height: 1.2"
                 material="src: #spritesheet-img; transparent: true; side: double">
             </a-entity>
         </a-entity>
+        
+        <div id="scanning-overlay"></div>
     </a-scene>
 
     <script src="main.js"></script>
