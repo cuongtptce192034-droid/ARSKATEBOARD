@@ -1,48 +1,44 @@
-window.addEventListener("load", () => {
+const COLS = 5;
+const ROWS = 7;
 
-const character=document.querySelector("#character");
+const IDLE_START = 25;
+const IDLE_END = 34;
 
-const plus=document.querySelector("#btn-plus");
+const JUMP_START = 0;
+const JUMP_END = 24;
 
-const minus=document.querySelector("#btn-minus");
+const character = document.querySelector("#character");
+const target = document.querySelector("#target");
 
-const scene=document.querySelector("a-scene");
+const plus = document.querySelector("#plus");
+const minus = document.querySelector("#minus");
 
-const COLS=5;
-const ROWS=7;
+let mesh = null;
+let material = null;
 
-const JUMP_START=0;
-const JUMP_END=24;
+let scale = 1.5;
 
-const IDLE_START=25;
-const IDLE_END=34;
+let idleFrame = IDLE_START;
 
-let material;
+let tracking = false;
 
-let idleFrame=IDLE_START;
+let jumping = false;
 
-let playingJump=false;
+function setFrame(frame){
 
-let scale=1.5;
+if(!material) return;
 
-scene.addEventListener("renderstart",()=>{
+const col = frame % COLS;
 
-material=character.getObject3D("mesh").material;
+const row = Math.floor(frame / COLS);
 
 material.map.repeat.set(
+
 1/COLS,
+
 1/ROWS
+
 );
-
-startIdle();
-
-});
-
-function setFrame(index){
-
-const col=index%COLS;
-
-const row=Math.floor(index/COLS);
 
 material.map.offset.set(
 
@@ -58,15 +54,15 @@ material.map.needsUpdate=true;
 
 function sleep(ms){
 
-return new Promise(resolve=>setTimeout(resolve,ms));
+return new Promise(r=>setTimeout(r,ms));
 
 }
 
 async function playJump(){
 
-if(playingJump) return;
+if(jumping) return;
 
-playingJump=true;
+jumping=true;
 
 for(let i=JUMP_START;i<=JUMP_END;i++){
 
@@ -76,15 +72,13 @@ await sleep(60);
 
 }
 
-playingJump=false;
+jumping=false;
 
 }
 
-function startIdle(){
+function idle(){
 
-setInterval(()=>{
-
-if(playingJump) return;
+if(tracking && !jumping){
 
 setFrame(idleFrame);
 
@@ -96,26 +90,86 @@ idleFrame=IDLE_START;
 
 }
 
-},100);
+}
+
+requestAnimationFrame(idle);
 
 }
 
-character.addEventListener("click",playJump);
+target.addEventListener("targetFound",()=>{
 
-plus.addEventListener("click",()=>{
+tracking=true;
+
+mesh=character.getObject3D("mesh");
+
+if(!mesh){
+
+console.log("mesh null");
+
+return;
+
+}
+
+material=mesh.material;
+
+material.map.wrapS=THREE.ClampToEdgeWrapping;
+
+material.map.wrapT=THREE.ClampToEdgeWrapping;
+
+setFrame(IDLE_START);
+
+console.log("FOUND");
+
+});
+
+target.addEventListener("targetLost",()=>{
+
+tracking=false;
+
+console.log("LOST");
+
+});
+
+character.addEventListener("click",()=>{
+
+if(tracking){
+
+playJump();
+
+}
+
+});
+
+plus.onclick=()=>{
 
 scale=Math.min(scale+0.2,4);
 
 character.object3D.scale.set(scale,scale,scale);
 
-});
+}
 
-minus.addEventListener("click",()=>{
+minus.onclick=()=>{
 
 scale=Math.max(scale-0.2,0.5);
 
 character.object3D.scale.set(scale,scale,scale);
 
-});
+}
 
-});
+setInterval(()=>{
+
+if(tracking && !jumping){
+
+idleFrame++;
+
+if(idleFrame>IDLE_END){
+
+idleFrame=IDLE_START;
+
+}
+
+}
+
+},100);
+
+idle();
