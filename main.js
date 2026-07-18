@@ -68,7 +68,7 @@ document.querySelector('a-scene').addEventListener('loaded', function () {
     document.getElementById('zoomIn').addEventListener('click', (e) => {
         e.stopPropagation();
         if (currentScale < MAX_SCALE) {
-            currentScale = Math.min(currentScale + 0.1, MAX_SCALE);
+            currentScale = Math.min(currentScale + 0.5, MAX_SCALE);
             updateScale();
         }
     });
@@ -76,7 +76,7 @@ document.querySelector('a-scene').addEventListener('loaded', function () {
     document.getElementById('zoomOut').addEventListener('click', (e) => {
         e.stopPropagation();
         if (currentScale > MIN_SCALE) {
-            currentScale = Math.max(currentScale - 0.1, MIN_SCALE);
+            currentScale = Math.max(currentScale - 0.5, MIN_SCALE);
             updateScale();
         }
     });
