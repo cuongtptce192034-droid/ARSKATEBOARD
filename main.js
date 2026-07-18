@@ -1,49 +1,52 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const char = document.querySelector('#char');
-    const btnZoomIn = document.querySelector('#btn-zoom-in');
-    const btnZoomOut = document.querySelector('#btn-zoom-out');
+const character = document.querySelector('#my-character');
+const material = character.getObject3D('mesh').material;
 
-    const idlePaths = Array.from({length: 10}, (_, i) => `./default/Untitled_Artwork-${i + 1}.png`);
-    const jumpPaths = Array.from({length: 25}, (_, i) => `./jump/Untitled_Artwork-${i + 1}.png`);
+// C?u hình sprite
+const COLS = 5;
+const ROWS = 7;
+let isAnimating = false; // Bi?n "Khóa" ?? ch?n spam
 
-    // HÀM PRELOAD: Ép trình duy?t n?p s?n ?nh vào RAM tr??c
-    function preloadImages(paths) {
-        paths.forEach(path => {
-            const img = new Image();
-            img.src = path;
-        });
+// Hàm c?p nh?t frame
+function setFrame(frameIndex) {
+    const col = frameIndex % COLS;
+    const row = Math.floor(frameIndex / COLS);
+    
+    // T? l? c?t
+    material.map.repeat.set(1 / COLS, 1 / ROWS);
+    // V? trí c?t (Công th?c chu?n cho UV map)
+    material.map.offset.set(col / COLS, 1 - (row + 1) / ROWS);
+    material.needsUpdate = true;
+}
+
+// Hàm ch?y Animation
+async function playAnimation(startFrame, endFrame, fps) {
+    if (isAnimating) return; // N?u ?ang ch?y thì ch?n l?nh m?i (Ch?ng spam)
+    isAnimating = true;
+
+    for (let i = startFrame; i <= endFrame; i++) {
+        setFrame(i);
+        await new Promise(resolve => setTimeout(resolve, 1000 / fps));
     }
-    preloadImages([...idlePaths, ...jumpPaths]);
 
-    let isJumping = false;
-    let frameIndex = 0;
+    isAnimating = false; // M? khóa sau khi xong
+    // T? ??ng quay v? tr?ng thái Default (25-34)
+    playDefaultLoop();
+}
 
-    // Animation ch?y m??t
-    setInterval(() => {
-        if (!isJumping) {
-            frameIndex = (frameIndex + 1) % idlePaths.length;
-            char.setAttribute('src', idlePaths[frameIndex]);
-        }
-    }, 150);
+// Ch?y vòng l?p Default (Frame 25-34)
+let defaultFrame = 25;
+function playDefaultLoop() {
+    if (isAnimating) return; // Không ch?y n?u ?ang nh?y
+    setFrame(defaultFrame);
+    defaultFrame++;
+    if (defaultFrame > 34) defaultFrame = 25;
+    setTimeout(playDefaultLoop, 100); 
+}
 
-    // X? lý nh?y
-    char.addEventListener('click', () => {
-        if (isJumping) return;
-        isJumping = true;
-        let jumpStep = 0;
+// B?t ??u
+playDefaultLoop();
 
-        const jumpInterval = setInterval(() => {
-            char.setAttribute('src', jumpPaths[jumpStep]);
-            jumpStep++;
-            if (jumpStep >= jumpPaths.length) {
-                clearInterval(jumpInterval);
-                setTimeout(() => { isJumping = false; }, 500); 
-            }
-        }, 80);
-    });
-
-    // Zoom
-    let scale = 1;
-    btnZoomIn.addEventListener('click', () => { scale += 0.2; char.setAttribute('scale', `${scale} ${scale} ${scale}`); });
-    btnZoomOut.addEventListener('click', () => { scale = Math.max(0.4, scale - 0.2); char.setAttribute('scale', `${scale} ${scale} ${scale}`); });
+// Gán s? ki?n cho màn hình (Ví d?: Click vào màn hình là nh?y)
+window.addEventListener('click', () => {
+    playAnimation(0, 24, 15); // Nh?y t? 0 ??n 24, t?c ?? 15fps
 });
