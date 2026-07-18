@@ -1,38 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
     const char = document.querySelector('#char');
+    const btnZoomIn = document.querySelector('#btn-zoom-in');
+    const btnZoomOut = document.querySelector('#btn-zoom-out');
     
-    // Liệt kê thủ công 10 ảnh Default
+    // G?i ID ?nh ?� ???c preload, ch?ng ?? tuy?t ??i
     const idleFrames = [
-        './default/Untitled_Artwork-1.png', './default/Untitled_Artwork-2.png', './default/Untitled_Artwork-3.png',
-        './default/Untitled_Artwork-4.png', './default/Untitled_Artwork-5.png', './default/Untitled_Artwork-6.png',
-        './default/Untitled_Artwork-7.png', './default/Untitled_Artwork-8.png', './default/Untitled_Artwork-9.png',
-        './default/Untitled_Artwork-10.png'
+        '#idle_1', '#idle_2', '#idle_3', '#idle_4', '#idle_5',
+        '#idle_6', '#idle_7', '#idle_8', '#idle_9', '#idle_10'
     ];
     
-    // Liệt kê thủ công 25 ảnh Jump
     const jumpFrames = [
-        './jump/Untitled_Artwork-1.png', './jump/Untitled_Artwork-2.png', './jump/Untitled_Artwork-3.png',
-        './jump/Untitled_Artwork-4.png', './jump/Untitled_Artwork-5.png', './jump/Untitled_Artwork-6.png',
-        './jump/Untitled_Artwork-7.png', './jump/Untitled_Artwork-8.png', './jump/Untitled_Artwork-9.png',
-        './jump/Untitled_Artwork-10.png', './jump/Untitled_Artwork-11.png', './jump/Untitled_Artwork-12.png',
-        './jump/Untitled_Artwork-13.png', './jump/Untitled_Artwork-14.png', './jump/Untitled_Artwork-15.png',
-        './jump/Untitled_Artwork-16.png', './jump/Untitled_Artwork-17.png', './jump/Untitled_Artwork-18.png',
-        './jump/Untitled_Artwork-19.png', './jump/Untitled_Artwork-20.png', './jump/Untitled_Artwork-21.png',
-        './jump/Untitled_Artwork-22.png', './jump/Untitled_Artwork-23.png', './jump/Untitled_Artwork-24.png',
-        './jump/Untitled_Artwork-25.png'
+        '#jump_1', '#jump_2', '#jump_3', '#jump_4', '#jump_5',
+        '#jump_6', '#jump_7', '#jump_8', '#jump_9', '#jump_10',
+        '#jump_11', '#jump_12', '#jump_13', '#jump_14', '#jump_15',
+        '#jump_16', '#jump_17', '#jump_18', '#jump_19', '#jump_20',
+        '#jump_21', '#jump_22', '#jump_23', '#jump_24', '#jump_25'
     ];
     
     let isJumping = false;
     let frameIndex = 0;
 
-    // Chạy loop Idle
+    // 1. Ch?y Animation Idle (T?ng t?c ?? l?i v? 150ms v� ?nh ?� preload m??t r?i)
     setInterval(() => {
         if (!isJumping) {
             frameIndex = (frameIndex + 1) % idleFrames.length;
             char.setAttribute('src', idleFrames[frameIndex]);
         }
-    }, 200); // Tăng lên 200ms để điện thoại tải ảnh kịp, tránh đơ
+    }, 150); 
 
+    // 2. Ch?c n?ng Nh?y
     char.addEventListener('click', () => {
         if (isJumping) return;
         isJumping = true;
@@ -43,8 +39,22 @@ document.addEventListener('DOMContentLoaded', () => {
             jumpStep++;
             if (jumpStep >= jumpFrames.length) {
                 clearInterval(jumpInterval);
-                setTimeout(() => { isJumping = false; }, 1000);
+                setTimeout(() => { isJumping = false; }, 2000); 
             }
-        }, 80); // Chạy nhanh hơn để animation nhảy mượt
+        }, 100); 
+    });
+
+    // 3. Ch?c n?ng Zoom in / Zoom out
+    let currentScale = 1; // T? l? g?c
+    
+    btnZoomIn.addEventListener('click', () => {
+        currentScale += 0.3; // M?i l?n b?m t?ng 30%
+        char.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
+    });
+
+    btnZoomOut.addEventListener('click', () => {
+        currentScale -= 0.3; // M?i l?n b?m gi?m 30%
+        if (currentScale < 0.4) currentScale = 0.4; // Kh�ng cho thu nh? qu� m?c bi?n m?t
+        char.setAttribute('scale', `${currentScale} ${currentScale} ${currentScale}`);
     });
 });
