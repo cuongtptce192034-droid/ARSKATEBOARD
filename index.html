@@ -1,10 +1,15 @@
-<!-- Trong <a-scene> -->
-<!-- Dùng a-entity với material làm tấm spritesheet -->
-<a-entity 
-  id="my-character"
-  geometry="primitive: plane; width: 1; height: 1"
-  material="src: #spritesheet; transparent: true; side: double">
-</a-entity>
+<a-scene>
+  <a-assets>
+    <!-- Khai báo file đúng tên spritesheet.png ở đây -->
+    <img id="spritesheet" src="spritesheet.png">
+  </a-assets>
 
-<!-- Script để xử lý logic -->
+  <!-- Vật thể nhân vật -->
+  <a-entity 
+    id="my-character"
+    geometry="primitive: plane; width: 1; height: 1"
+    material="src: #spritesheet; transparent: true; side: double">
+  </a-entity>
+</a-scene>
+
 <script src="main.js"></script>
