@@ -1,8 +1,6 @@
-// ??i scene s?n sàng
 document.querySelector('a-scene').addEventListener('loaded', function () {
     const character = document.querySelector('#my-character');
     
-    // ??i ?nh load xong m?i ch?y ho?t hình, tránh treo máy
     character.addEventListener('materialtextureloaded', () => {
         const material = character.getObject3D('mesh').material;
         const COLS = 5;
@@ -28,20 +26,21 @@ document.querySelector('a-scene').addEventListener('loaded', function () {
             playDefaultLoop();
         }
 
-        let defaultFrame = 25;
         function playDefaultLoop() {
-            if (isAnimating) return;
-            setFrame(defaultFrame);
-            defaultFrame++;
-            if (defaultFrame > 34) defaultFrame = 25;
-            setTimeout(playDefaultLoop, 100); 
+            let frame = 25;
+            setInterval(() => {
+                if (!isAnimating) {
+                    setFrame(frame);
+                    frame++;
+                    if (frame > 34) frame = 25;
+                }
+            }, 100);
         }
 
-        // B?t ??u
         playDefaultLoop();
 
-        // Click ?? nh?y
-        window.addEventListener('click', () => {
+        // Nh?y khi nh?n vào nhân v?t
+        character.addEventListener('click', () => {
             playAnimation(0, 24, 15);
         });
     });
